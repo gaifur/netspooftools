@@ -19,7 +19,7 @@
 
 #include "mac.h"
 
-#define BUFFER_SIZE 1600
+#define BUFFER_SIZE MAC_MTU
 
 macaddr_t broadcast_macaddr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 

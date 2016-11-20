@@ -28,6 +28,14 @@
 #define IPV4_ETHERTYPE 0x0800
 #endif
 
+#ifndef MAC_MTU
+#define MAC_MTU 1500
+#endif
+
+#ifndef MAC_MAXLEN
+#define MAC_MAXLEN (MAC_MTU-sizeof(macframe_t))
+#endif
+
 // type for MAC Adress
 typedef uint8_t macaddr_t[ETH_ALEN];
 
