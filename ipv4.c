@@ -27,24 +27,23 @@ int send_ipv4(raw_iface_t *iface,
 	      macaddr_t src_mac, ipaddr_t src_ip,
 	      macaddr_t target_mac, ipaddr_t target_ip,
 	      void *payload, size_t len, uint8_t proto, uint8_t ttl) {
-
   ipv4_t pkg;
-
+  
   if(len > IP_MAXLEN) return -1;
-
   bzero(&pkg, sizeof(ipv4_t));
+  
+  memcpy(ipv4_payload(&pkg), payload, len);
+  len += sizeof(ipv4_t);
   pkg.version = 0x45;
-  pkg.total_len = len + sizeof(ipv4_t);
+  pkg.total_len = htons(len);
   pkg.fragmentation = htons(0x4000);
   pkg.ttl = ttl;
   pkg.proto = proto;
   memcpy(pkg.src_ip, src_ip, IP_ALEN);
   memcpy(pkg.des_ip, target_ip, IP_ALEN);
   pkg.header_checksum = ipv4_checksum(&pkg);
-
-  memcpy(ipv4_payload(&pkg), payload, len);
   
-  return send_frame(iface, &pkg, pkg.total_len,
+  
+  return send_frame(iface, &pkg, len,
 		    src_mac, target_mac, IPV4_ETHERTYPE);
 }
-

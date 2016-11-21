@@ -14,6 +14,10 @@
 #define IP_MAXLEN (MAC_MAXLEN-sizeof(ipv4_t))
 #endif
 
+#ifndef UDP_PROTO
+#define UDP_PROTO 0x11
+#endif
+
 typedef uint8_t ipaddr_t[IP_ALEN];
 
 typedef struct ipv4_t {
