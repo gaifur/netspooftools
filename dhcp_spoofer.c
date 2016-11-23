@@ -11,8 +11,6 @@
 
 static volatile unsigned keepRunning = 1;
 
-static const uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
 static void intHandler() {
   keepRunning = 0;
 }
@@ -83,6 +81,13 @@ int main(int argc, char** argv) {
       switch(dhcptype) {
       case DHCP_DISCOVERY:
 				client_ip = current_ip.s_addr;
+				if((int16_t)ntohs(dhcpmsg->flags) < 0) {
+					target_ip = -1;
+					target_mac = broadcast_macaddr;
+				} else {
+					target_ip = client_ip;
+					target_mac = frame->src;
+				}
 				send_dhcpreply(&iface, DHCP_OFFER, dhcpmsg->xid,
 											 iface.macaddr, myIp.s_addr,
 											 target_mac, target_ip,
