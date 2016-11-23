@@ -3,17 +3,14 @@ LD=$(CC)
 CFLAGS=-Wall -O2
 LDFLAGS=
 
-all: arp_spoofer arp_dump
+all: dhcp_spoofer
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-arp_spoofer: arp_spoofer.o arp.o mac.o
-	$(LD) $(LDFLAGS) -o $@ $+
-
-arp_dump: arp_dump.o arp.o mac.o
+dhcp_spoofer: dhcp_spoofer.o dhcp.o udp4.o ipv4.o mac.o
 	$(LD) $(LDFLAGS) -o $@ $+
 
 
 clean:
-	rm -f arp_spoofer arp_dump *.o
+	rm -f arp_spoofer arp_dump dhcp_spoofer *.o
