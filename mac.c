@@ -24,11 +24,11 @@
 macaddr_t broadcast_macaddr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 // Creates an raw socket and put the interface into promiscous mode
-int open_raw_socket(raw_iface_t *rs, char *ifname) {
+int open_raw_socket(raw_iface_t *rs, char *ifname, uint16_t ethertype) {
   struct ifreq ifr;
 	
   /* Creates a RAW socket descriptor */
-  if((rs->fd = socket(PF_PACKET,SOCK_RAW, htons(ETH_P_ALL))) < 0) {
+  if((rs->fd = socket(PF_PACKET,SOCK_RAW, htons(ethertype))) < 0) {
     perror("socket");
     return -1;
   }
@@ -36,9 +36,10 @@ int open_raw_socket(raw_iface_t *rs, char *ifname) {
   rs->socket_addr.sll_halen = ETH_ALEN;
 	
   /* Gets network interface */
-  strcpy(ifr.ifr_name, ifname);
+  strncpy(ifr.ifr_name, ifname, IFNAMSIZ-1);
   if(ioctl(rs->fd, SIOCGIFINDEX, &ifr) < 0) {
     perror("ioctl");
+		close(rs->fd);
     return -1;
   }
   rs->socket_addr.sll_ifindex = ifr.ifr_ifindex;
@@ -46,6 +47,7 @@ int open_raw_socket(raw_iface_t *rs, char *ifname) {
   /* Gets interface flags */
   if (ioctl(rs->fd, SIOCGIFFLAGS, &ifr) < 0){
     perror("ioctl");
+		close(rs->fd);
     return -1;
   }
 
@@ -53,16 +55,19 @@ int open_raw_socket(raw_iface_t *rs, char *ifname) {
   ifr.ifr_flags |= IFF_PROMISC;
   if(ioctl(rs->fd, SIOCSIFFLAGS, &ifr) < 0) {
     perror("ioctl");
+		close(rs->fd);
     return -1;
   }
 
   /* Gets interface MAC Adress */
   if (ioctl(rs->fd, SIOCGIFHWADDR, &ifr) < 0) {
     perror("SIOCGIFHWADDR");
+		close(rs->fd);
     return -1;
   }
 
-  memcpy(&(rs->macaddr), ifr.ifr_hwaddr.sa_data, ETH_ALEN);
+  memcpy(rs->macaddr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
+	strncpy(rs->ifname, ifname, IFNAMSIZ-1);
 
   return rs->fd;
 }
@@ -70,7 +75,7 @@ int open_raw_socket(raw_iface_t *rs, char *ifname) {
 // Assembles a MAC frame and sends into the wire
 int send_frame(raw_iface_t *rs, void *payload, size_t length,
 	       macaddr_t source, macaddr_t target, uint16_t ethertype) {
-  uint8_t buffer[BUFFER_SIZE];
+  uint8_t buffer[MAC_MTU];
   int ret;
 
   macframe_t *frame = (macframe_t*)buffer;

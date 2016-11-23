@@ -48,7 +48,7 @@ int send_dhcpack(raw_iface_t *iface, uint32_t xid,
 
   frame->options[opts++] = DHCP_LEASETIME;
   frame->options[opts++] = 4;
- *(uint32_t*)(frame->options+opts) = htonl(3600);
+ *(uint32_t*)(frame->options+opts) = htonl(86400);
   opts+= 4;
 
   frame->options[opts++] = DHCP_NETMASK;
@@ -104,7 +104,7 @@ int send_dhcpoffer(raw_iface_t *iface, uint32_t xid,
 
   frame->options[opts++] = DHCP_LEASETIME;
   frame->options[opts++] = 4;
-  *(uint32_t*)(frame->options+opts) = htonl(3600);
+  *(uint32_t*)(frame->options+opts) = htonl(86400);
   opts+= 4;
 
   frame->options[opts++] = DHCP_NETMASK;
@@ -133,3 +133,4 @@ int send_dhcpoffer(raw_iface_t *iface, uint32_t xid,
 		   dst_mac, dst_ip, 68,
 		   frame, len, 64);
 }
+

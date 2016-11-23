@@ -20,12 +20,12 @@
 #define ETH_ALEN 6
 #endif
 
-#ifndef ARP_ETHERTYPE
-#define ARP_ETHERTYPE 0x0806
+#ifndef ETH_P_ARP
+#define ETH_P_ARP 0x0806
 #endif
 
-#ifndef IPV4_ETHERTYPE
-#define IPV4_ETHERTYPE 0x0800
+#ifndef ETH_P_IP
+#define ETH_P_IP 0x0800
 #endif
 
 #ifndef MAC_MTU
@@ -43,6 +43,7 @@ typedef uint8_t macaddr_t[ETH_ALEN];
  * sending and receving raw ethernet frames */
 typedef struct raw_iface_t {
   struct sockaddr_ll socket_addr;
+	char ifname[IFNAMSIZ];
   macaddr_t  macaddr;
   int fd;
 } raw_iface_t;
@@ -58,10 +59,10 @@ typedef struct macframe_t {
 extern macaddr_t broadcast_macaddr;
 
 // Creates an raw socket and put the interface into promiscous mode
-int open_raw_socket(raw_iface_t *rs, char *ifname);
+int open_raw_socket(raw_iface_t *rs, char *ifname, uint16_t ethertype);
 // Assembles a MAC frame and sends into the wire
 int send_frame(raw_iface_t *rs, void *payload, size_t length,
-	       macaddr_t source, macaddr_t target, uint16_t ethertype);
+							 macaddr_t source, macaddr_t target, uint16_t ethertype);
 // Wrapper for recv syscall, so raw_iface_t abstraction is used
 int recv_frame(raw_iface_t *rs, void *buffer, size_t buff_len);
 

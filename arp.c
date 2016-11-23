@@ -64,7 +64,7 @@ int send_arp4_request(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ip
   arp_t arp;
 
   arp.htype = htons(1);
-  arp.ptype = htons(IPV4_ETHERTYPE);
+  arp.ptype = htons(ETH_P_IP);
 
   arp.hlen = ETH_ALEN;
   arp.plen = IP_ALEN;
@@ -77,7 +77,7 @@ int send_arp4_request(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ip
   bzero(arp.payload.v4.dest_macaddr, ETH_ALEN);
   memcpy(arp.payload.v4.dest_ipaddr, target_ip, IP_ALEN);
 
-  return send_frame(iface, &arp, sizeof(arp_t), src_macaddr, target_macaddr, ARP_ETHERTYPE);
+  return send_frame(iface, &arp, sizeof(arp_t), src_macaddr, target_macaddr, ETH_P_ARP);
 }
 
 // Assembles an ARP reply and send it
@@ -86,7 +86,7 @@ int send_arp4_reply(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ipad
   arp_t arp;
 
   arp.htype = htons(1);
-  arp.ptype = htons(IPV4_ETHERTYPE);
+  arp.ptype = htons(ETH_P_IP);
 
   arp.hlen = ETH_ALEN;
   arp.plen = IP_ALEN;
@@ -99,7 +99,7 @@ int send_arp4_reply(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ipad
   memcpy(arp.payload.v4.dest_macaddr, target_macaddr, ETH_ALEN);
   memcpy(arp.payload.v4.dest_ipaddr, target_ip, IP_ALEN);
 
-  return send_frame(iface, &arp, sizeof(arp_t), src_macaddr, target_macaddr, ARP_ETHERTYPE);
+  return send_frame(iface, &arp, sizeof(arp_t), src_macaddr, target_macaddr, ETH_P_ARP);
 }
 
 // SIGALRM cappll back used to timeout the ARP lookup process
@@ -132,7 +132,7 @@ int arp4_lookup(raw_iface_t *iface, ipaddr_t src_ipaddr, macaddr_t src_mac,
 
     /* if valid frame from target_ipaddr is received
      * copy target_macaddr */
-    if((ntohs(frame->ethertype) == ARP_ETHERTYPE) &&
+    if((ntohs(frame->ethertype) == ETH_P_ARP) &&
        (!memcmp(arp->payload.v4.src_ipaddr, target_ipaddr, IP_ALEN))) {
       memcpy(target_mac, arp->payload.v4.src_macaddr, ETH_ALEN);
       alarm(0);
