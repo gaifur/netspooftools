@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Usage: %s <iface> <target A ip> <target B ip>\n", argv[0]);
     return 1;
   }
-
+  
   if(parse_ipv4str(ipaddr_a, argv[2])) {
     fprintf(stderr, "Invalid ip addr %s\n", argv[2]);
     exit(1);
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  if((fd = open_raw_socket(&iface, argv[1])) < 0)
+  if((fd = open_raw_socket(&iface, argv[1], ETH_P_ARP)) < 0)
     exit(1);
 
   // Enables ip_forward

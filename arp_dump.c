@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if((fd = open_raw_socket(&iface, argv[1])) < 0)
+  if((fd = open_raw_socket(&iface, argv[1], ETH_P_ARP)) < 0)
     exit(1);
 
   /* until SIGINT is received keep sending fake requests
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
       return -1;
     }
 
-    if(ntohs(frame->ethertype) == ARP_ETHERTYPE) {
+    if(ntohs(frame->ethertype) == ETH_P_ARP) {
       printf("Destination MAC: ");
       print_bytearray(frame->dest, ETH_ALEN, 16, ':');
       printf("\nSource MAC: ");

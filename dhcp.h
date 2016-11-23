@@ -43,16 +43,13 @@ typedef struct dhcp_t {
 #define DHCP_LEASETIME 51
 #define DHCP_TERMINATE 0xFF
 
-int send_dhcpack(raw_iface_t *iface, uint32_t xid,
-		 macaddr_t src_mac, ipaddr_t src_ip,
-		 macaddr_t dst_mac, ipaddr_t dst_ip,
-		 ipaddr_t gateway, ipaddr_t dns,
-		 macaddr_t chaddr, ipaddr_t ciaddr);
-
-int send_dhcpoffer(raw_iface_t *iface, uint32_t xid,
+int send_dhcpreply(raw_iface_t *iface, uint8_t type, uint32_t xid,
 		   macaddr_t src_mac, ipaddr_t src_ip,
 		   macaddr_t dst_mac, ipaddr_t dst_ip,
 		   ipaddr_t gateway, ipaddr_t dns,
 		   macaddr_t chaddr, ipaddr_t ciaddr);
+
+int dhcp_parse_request(dhcp_t *dhcp, ipaddr_t *rq_addr);
+int dhcp_parse_type(dhcp_t *dhcp, uint8_t *type);
 
 #endif

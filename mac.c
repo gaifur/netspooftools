@@ -26,7 +26,7 @@ macaddr_t broadcast_macaddr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 // Creates an raw socket and put the interface into promiscous mode
 int open_raw_socket(raw_iface_t *rs, char *ifname, uint16_t ethertype) {
   struct ifreq ifr;
-	
+  
   /* Creates a RAW socket descriptor */
   if((rs->fd = socket(PF_PACKET,SOCK_RAW, htons(ethertype))) < 0) {
     perror("socket");
@@ -111,3 +111,8 @@ int recv_frame(raw_iface_t *rs, void *buffer, size_t buff_len) {
 
   return ret;
 }
+
+/* Local Variables: */
+/* mode: c */
+/* tab-width: 2 */
+/* End: */

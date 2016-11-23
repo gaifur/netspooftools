@@ -94,10 +94,10 @@ int send_arp4_reply(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ipad
   arp.operation = htons(ARP_REPLY);
 
   memcpy(arp.payload.v4.src_macaddr, src_macaddr, ETH_ALEN);
-  memcpy(arp.payload.v4.src_ipaddr, src_ipaddr, IP_ALEN);
+  arp.payload.v4.src_ipaddr = src_ipaddr;
   
   memcpy(arp.payload.v4.dest_macaddr, target_macaddr, ETH_ALEN);
-  memcpy(arp.payload.v4.dest_ipaddr, target_ip, IP_ALEN);
+  arp.payload.v4.dest_ipaddr = target_ip;
 
   return send_frame(iface, &arp, sizeof(arp_t), src_macaddr, target_macaddr, ETH_P_ARP);
 }
@@ -133,7 +133,7 @@ int arp4_lookup(raw_iface_t *iface, ipaddr_t src_ipaddr, macaddr_t src_mac,
     /* if valid frame from target_ipaddr is received
      * copy target_macaddr */
     if((ntohs(frame->ethertype) == ETH_P_ARP) &&
-       (!memcmp(arp->payload.v4.src_ipaddr, target_ipaddr, IP_ALEN))) {
+       (arp->payload.v4.src_ipaddr == target_ipaddr)) {
       memcpy(target_mac, arp->payload.v4.src_macaddr, ETH_ALEN);
       alarm(0);
       signal(SIGALRM, SIG_IGN);
@@ -144,28 +144,6 @@ int arp4_lookup(raw_iface_t *iface, ipaddr_t src_ipaddr, macaddr_t src_mac,
   return -2;
 }
 
-// Parse address string into ipaddr_t format
-int parse_ipv4str(ipaddr_t ip, char *str) {
-  unsigned i, j;
-  uint8_t k;
-
-  while(isspace(*str)) str++;
-
-  for(i = 0 ; i < IP_ALEN; i++, str++) {
-    k = 0;
-    for(j = 0 ; (j < 3) && *str && isdigit(*str); j++, str++) {
-      k *= 10;
-      k += *str - '0';
-    }
-
-    ip[i] = k;
-    
-    if(*str && *str != '.')
-      break;
-  }
-
-  return IP_ALEN - i;
-}
 
 /* Local Variables: */
 /* mode: c */

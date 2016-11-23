@@ -20,8 +20,6 @@
 #define ARP_REQUEST 1
 #define ARP_REPLY 2
 
-typedef uint8_t ipaddr_t[IP_ALEN];
-
 // ARP for ipv4 on ethernet payload structure
 typedef struct arp4_payload_t {
   macaddr_t src_macaddr;
@@ -74,6 +72,5 @@ int send_arp4_reply(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ipad
 int arp4_lookup(raw_iface_t *iface, ipaddr_t src_ipaddr, macaddr_t src_mac,
 		ipaddr_t target_ipaddr, macaddr_t target_mac);
 
-int parse_ipv4str(ipaddr_t ip, char *str);
 
 #endif /* !ARP_H */
