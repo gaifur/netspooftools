@@ -19,7 +19,7 @@ typedef struct dhcp_t {
   ipaddr_t yiaddr;
   ipaddr_t siaddr;
   ipaddr_t giaddr;
-  uint16_t chaddr[16];
+  uint8_t chaddr[16];
   uint8_t sname[64];
   uint8_t bfile[128];
   uint32_t magic;

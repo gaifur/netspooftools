@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -90,10 +91,10 @@ int dhcp_parse_request(dhcp_t *dhcp, ipaddr_t *rq_addr) {
   
   while(*a != DHCP_TERMINATE) {
     if(*a == 50) {
-      memcpy(&rq_addr, a+2, IP_ALEN);
+      memcpy(rq_addr, a+2, IP_ALEN);
       return a-(dhcp->options);
     }
-    a += *a ? *(a+1) : 1;
+    a += *a ? *(a+1)+2 : 1;
   }
 
   return -1;
@@ -112,7 +113,7 @@ int dhcp_parse_type(dhcp_t *dhcp, uint8_t *type) {
       *type = *(a+2);
       return a-(dhcp->options);
     }
-    a += *a ? *(a+1) : 1;
+    a += *a ? *(a+1)+2 : 1;
   }
 
   return -1;

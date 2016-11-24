@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -51,7 +52,7 @@ int send_udp4(raw_iface_t *iface,
   frame->checksum = 0;
 
   // checksumming udp over ipv4 is optional, but doing it because we are nice
-  frame->checksum = udp4_checksum(frame, src_ip, dst_ip);
+	/*  frame->checksum = udp4_checksum(frame, src_ip, dst_ip); // not so nice since it is broken */
 
   return send_ipv4(iface,
 		   src_mac, src_ip,

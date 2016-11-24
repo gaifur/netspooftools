@@ -16,7 +16,8 @@
 
 void *ipv4_payload(ipv4_t *pkg) {
   unsigned offset = ((pkg->version & 0x0F)<<2)-sizeof(ipv4_t);
-  return &(pkg->payload[offset]);
+	
+  return pkg->payload+offset;
 }
 
 uint16_t ipv4_checksum(ipv4_t *pkg) {
@@ -51,23 +52,26 @@ int send_ipv4(raw_iface_t *iface,
 	      macaddr_t src_mac, ipaddr_t src_ip,
 	      macaddr_t dst_mac, ipaddr_t dst_ip,
 	      void *payload, size_t len, uint8_t proto, uint8_t ttl) {
-  ipv4_t pkg;
+	uint8_t buffer[IP_MAXLEN];
+	
+  ipv4_t *pkg = (ipv4_t*)buffer;
   
   if(len > IP_MAXLEN) return -1;
-  bzero(&pkg, sizeof(ipv4_t));
+  bzero(pkg, sizeof(ipv4_t));
   
-  memcpy(ipv4_payload(&pkg), payload, len);
   len += sizeof(ipv4_t);
-  pkg.version = 0x45;
-  pkg.total_len = htons(len);
-  pkg.fragmentation = htons(0x4000);
-  pkg.ttl = ttl;
-  pkg.proto = proto;
-  pkg.src_ip = src_ip;
-  pkg.dst_ip = dst_ip;
-  pkg.header_checksum = ipv4_checksum(&pkg);  
-  
-  return send_frame(iface, &pkg, len, src_mac , dst_mac, ETH_P_IP);
+  pkg->version = 0x45;
+  pkg->total_len = htons(len);
+  pkg->fragmentation = htons(0x4000);
+  pkg->ttl = ttl;
+  pkg->proto = proto;
+  pkg->src_ip = src_ip;
+  pkg->dst_ip = dst_ip;
+  pkg->header_checksum = ipv4_checksum(pkg);
+
+	memcpy(ipv4_payload(pkg), payload, len-sizeof(ipv4_t));
+	
+  return send_frame(iface, pkg, len, src_mac , dst_mac, ETH_P_IP);
 }
 
 /* Local Variables: */

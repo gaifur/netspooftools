@@ -27,8 +27,8 @@ int main(int argc, char** argv) {
 
   macframe_t *frame = (macframe_t*)buffer;
   ipv4_t *ippkg = (ipv4_t*)(frame->payload);
-  udp_t *udppkg = (udp_t*)(ippkg->payload);
-  dhcp_t *dhcpmsg = (dhcp_t*)(udppkg->payload);
+  udp_t *udppkg;
+  dhcp_t *dhcpmsg;
   uint8_t dhcptype;
 
   if (argc < 5) {
@@ -74,31 +74,15 @@ int main(int argc, char** argv) {
       return -1;
     }
     if((frame->ethertype == htons(ETH_P_IP)) &&
-       (ippkg->proto == UDP_PROTO) &&
-       (udppkg->dst_port == htons(67)) &&
-       (dhcp_parse_type(dhcpmsg, &dhcptype) >= 0)){
-			
-      switch(dhcptype) {
-      case DHCP_DISCOVERY:
-				client_ip = current_ip.s_addr;
-				if((int16_t)ntohs(dhcpmsg->flags) < 0) {
-					target_ip = -1;
-					target_mac = broadcast_macaddr;
-				} else {
-					target_ip = client_ip;
-					target_mac = frame->src;
-				}
-				send_dhcpreply(&iface, DHCP_OFFER, dhcpmsg->xid,
-											 iface.macaddr, myIp.s_addr,
-											 target_mac, target_ip,
-											 myIp.s_addr, dns.s_addr,
-											 frame->src, client_ip);
-				client_ip = ntohl(current_ip.s_addr)+1;
-				current_ip.s_addr = htonl(client_ip > ntohl(end_ip.s_addr) ?
-																	ntohl(start_ip.s_addr) : client_ip);
-				break;
-      case DHCP_REQ:
-				if(dhcp_parse_request(dhcpmsg, &client_ip) >= 0) {
+       (ippkg->proto == UDP_PROTO)) {
+			udppkg = ipv4_payload(ippkg);
+			dhcpmsg = (dhcp_t*)(udppkg->payload);
+			if((udppkg->dst_port == htons(67)) &&
+				 (dhcp_parse_type(dhcpmsg, &dhcptype) >= 0)){
+				
+				switch(dhcptype) {
+				case DHCP_DISCOVERY:
+					client_ip = current_ip.s_addr;
 					if((int16_t)ntohs(dhcpmsg->flags) < 0) {
 						target_ip = -1;
 						target_mac = broadcast_macaddr;
@@ -106,19 +90,38 @@ int main(int argc, char** argv) {
 						target_ip = client_ip;
 						target_mac = frame->src;
 					}
-					send_dhcpreply(&iface, DHCP_ACK, dhcpmsg->xid,
+					send_dhcpreply(&iface, DHCP_OFFER, dhcpmsg->xid,
 												 iface.macaddr, myIp.s_addr,
 												 target_mac, target_ip,
 												 myIp.s_addr, dns.s_addr,
 												 frame->src, client_ip);
+					client_ip = ntohl(current_ip.s_addr)+1;
+					current_ip.s_addr = htonl(client_ip > ntohl(end_ip.s_addr) ?
+																		ntohl(start_ip.s_addr) : client_ip);
+					break;					
+				case DHCP_REQ:
+					if(dhcp_parse_request(dhcpmsg, &client_ip) >= 0) {
+						if((int16_t)ntohs(dhcpmsg->flags) < 0) {
+							target_ip = -1;
+							target_mac = broadcast_macaddr;
+						} else {
+							target_ip = client_ip;
+							target_mac = frame->src;
+						}
+						send_dhcpreply(&iface, DHCP_ACK, dhcpmsg->xid,
+													 iface.macaddr, myIp.s_addr,
+													 target_mac, target_ip,
+													 myIp.s_addr, dns.s_addr,
+													 frame->src, client_ip);
+					}
+					break;
 				}
-				break;
-      }
-    }
-  }
+			}
+		}
+	}
 	
-  close(fd);
-  return 0;
+	close(fd);
+	return 0;
 }
 
 /* Local Variables: */

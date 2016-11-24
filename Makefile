@@ -1,7 +1,7 @@
 CC=gcc
 LD=$(CC)
-CFLAGS=-Wall -O2
-LDFLAGS=
+CFLAGS=-Wall -g
+LDFLAGS=-g
 
 all: dhcp_spoofer
 

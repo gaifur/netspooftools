@@ -44,3 +44,8 @@ flycheck_*.el
 
 # directory configuration
 .dir-locals.el
+
+*.o
+dhcp_spoofer
+arp_spoofer
+arp_dump
