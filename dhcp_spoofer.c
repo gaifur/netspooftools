@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   FILE *ip_forward;
 	uint8_t *target_mac;
 	ipaddr_t target_ip, client_ip;
-  static struct in_addr start_ip, current_ip, end_ip, dns, myIp;
+  static struct in_addr dhcp_server, dns, myIp;
 
   macframe_t *frame = (macframe_t*)buffer;
   ipv4_t *ippkg = (ipv4_t*)(frame->payload);
@@ -31,8 +31,8 @@ int main(int argc, char** argv) {
   dhcp_t *dhcpmsg;
   uint8_t dhcptype;
 
-  if (argc < 5) {
-    fprintf(stderr, "Usage: %s <iface> <dns> <range start> <range end>\n", argv[0]);
+  if (argc < 4) {
+    fprintf(stderr, "Usage: %s <iface> <dns> <original dhcp>\n", argv[0]);
     return 1;
   }
 
@@ -41,24 +41,18 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if(!inet_aton(argv[3], &start_ip)) {
+  if(!inet_aton(argv[3], &dhcp_server)) {
     fprintf(stderr, "Invalid ip addr %s\n", argv[2]);
     return 1;
   }
 
-  if(!inet_aton(argv[4], &end_ip)) {
-    fprintf(stderr, "Invalid ip addr %s\n", argv[2]);
-    return 1;
-  }
-
-  current_ip = start_ip;
 
   if((fd = open_raw_socket(&iface, argv[1], ETH_P_IP)) < 0)
     return -1;
 
   if(get_ipv4_addr(&iface, &myIp) < 0)
     return -1;
-
+	
   // Enables ip_forward
   if(!((ip_forward = fopen("/proc/sys/net/ipv4/ip_forward", "w")) &&
        (fputc('1', ip_forward) == '1')))
@@ -66,56 +60,34 @@ int main(int argc, char** argv) {
   
   if(ip_forward)
     fclose(ip_forward);
-
+	
   signal(SIGINT, intHandler);
   while(keepRunning) {
     if((len = recv_frame(&iface, buffer, sizeof(buffer))) < 0) {
       close(fd);
       return -1;
     }
+		
     if((frame->ethertype == htons(ETH_P_IP)) &&
        (ippkg->proto == UDP_PROTO)) {
 			udppkg = ipv4_payload(ippkg);
 			dhcpmsg = (dhcp_t*)(udppkg->payload);
 			if((udppkg->dst_port == htons(67)) &&
-				 (dhcp_parse_type(dhcpmsg, &dhcptype) >= 0)){
-				
-				switch(dhcptype) {
-				case DHCP_DISCOVERY:
-					client_ip = current_ip.s_addr;
-					if((int16_t)ntohs(dhcpmsg->flags) < 0) {
-						target_ip = -1;
-						target_mac = broadcast_macaddr;
-					} else {
-						target_ip = client_ip;
-						target_mac = frame->src;
-					}
-					send_dhcpreply(&iface, DHCP_OFFER, dhcpmsg->xid,
-												 iface.macaddr, myIp.s_addr,
-												 target_mac, target_ip,
-												 myIp.s_addr, dns.s_addr,
-												 frame->src, client_ip);
-					client_ip = ntohl(current_ip.s_addr)+1;
-					current_ip.s_addr = htonl(client_ip > ntohl(end_ip.s_addr) ?
-																		ntohl(start_ip.s_addr) : client_ip);
-					break;					
-				case DHCP_REQ:
-					if(dhcp_parse_request(dhcpmsg, &client_ip) >= 0) {
-						if((int16_t)ntohs(dhcpmsg->flags) < 0) {
-							target_ip = -1;
-							target_mac = broadcast_macaddr;
-						} else {
-							target_ip = client_ip;
-							target_mac = frame->src;
-						}
-						send_dhcpreply(&iface, DHCP_ACK, dhcpmsg->xid,
-													 iface.macaddr, myIp.s_addr,
-													 target_mac, target_ip,
-													 myIp.s_addr, dns.s_addr,
-													 frame->src, client_ip);
-					}
-					break;
+				 (dhcp_parse_type(dhcpmsg, &dhcptype) >= 0) &&
+				 (dhcptype == DHCP_REQ) &&
+				 (dhcp_parse_request(dhcpmsg, &client_ip) >= 0)) {
+				if((int16_t)ntohs(dhcpmsg->flags) < 0) {
+					target_ip = -1;
+					target_mac = broadcast_macaddr;
+				} else {
+					target_ip = client_ip;
+					target_mac = frame->src;
 				}
+				send_dhcpreply(&iface, DHCP_ACK, dhcpmsg->xid,
+											 iface.macaddr, dhcp_server.s_addr,
+											 target_mac, target_ip,
+											 myIp.s_addr, dns.s_addr,
+											 frame->src, client_ip);
 			}
 		}
 	}
