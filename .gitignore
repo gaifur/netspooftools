@@ -42,8 +42,6 @@ flycheck_*.el
 # projectiles files
 .projectile
 
-# directory configuration
-.dir-locals.el
 
 *.o
 dhcp_spoofer

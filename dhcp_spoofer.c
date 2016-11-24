@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   uint8_t *target_mac;
   macaddr_t dhcp_mac;
   ipaddr_t target_ip, client_ip, dhcp_ip, netmask, dns;
-  static struct in_addr myIp;
+  struct in_addr myIp;
 
   macframe_t *frame = (macframe_t*)buffer;
   ipv4_t *ippkg = (ipv4_t*)(frame->payload);

