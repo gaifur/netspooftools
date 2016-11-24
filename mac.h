@@ -68,3 +68,9 @@ int send_frame(raw_iface_t *rs, void *payload, size_t length,
 int recv_frame(raw_iface_t *rs, void *buffer, size_t buff_len);
 
 #endif /* !MAC_H */
+
+/* Local Variables: */
+/* mode: c */
+/* tab-width: 2 */
+/* indent-tabs-mode: nil */
+/* End: */

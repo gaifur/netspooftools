@@ -18,6 +18,12 @@ uint16_t udp4_checksum(udp_t *frame, ipaddr_t src_ip, ipaddr_t dst_ip) {
   udp4_pheader_t ph;
   uint32_t sum = 0;
   size_t len = ntohs(frame->length);
+
+  if(len&1) {
+    ((uint8_t*)frame)[len] = 0;
+    len++;
+  }
+  
   
   ph.src_addr = src_ip;
   ph.dst_addr = dst_ip;
@@ -25,8 +31,8 @@ uint16_t udp4_checksum(udp_t *frame, ipaddr_t src_ip, ipaddr_t dst_ip) {
   ph.proto = UDP_PROTO;
   ph.length = frame->length;
 
-  sum = ~checksum16(&ph, sizeof(udp4_pheader_t));
-  sum += ~checksum16(frame, len);
+  sum = (~checksum16(frame, len))&0xFFFF;
+  sum += (~checksum16(&ph, sizeof(udp4_pheader_t))&0xFFFF);
 
   while(sum >> 16)
     sum = (sum & 0xFFFF) + (sum >> 16);
@@ -35,9 +41,9 @@ uint16_t udp4_checksum(udp_t *frame, ipaddr_t src_ip, ipaddr_t dst_ip) {
 }
 
 int send_udp4(raw_iface_t *iface,
-	      macaddr_t src_mac, ipaddr_t src_ip, uint16_t src_port,
-	      macaddr_t dst_mac, ipaddr_t dst_ip, uint16_t dst_port,
-	      void *payload, size_t len, uint8_t ttl) {
+              macaddr_t src_mac, ipaddr_t src_ip, uint16_t src_port,
+              macaddr_t dst_mac, ipaddr_t dst_ip, uint16_t dst_port,
+              void *payload, size_t len, uint8_t ttl) {
   uint8_t buffer[IP_MAXLEN];
   udp_t *frame = (udp_t*)buffer;
 
@@ -52,12 +58,12 @@ int send_udp4(raw_iface_t *iface,
   frame->checksum = 0;
 
   // checksumming udp over ipv4 is optional, but doing it because we are nice
-	/*  frame->checksum = udp4_checksum(frame, src_ip, dst_ip); // not so nice since it is broken */
+  frame->checksum = udp4_checksum(frame, src_ip, dst_ip);
 
   return send_ipv4(iface,
-		   src_mac, src_ip,
-		   dst_mac, dst_ip,
-		   frame, len, UDP_PROTO, ttl);
+                   src_mac, src_ip,
+                   dst_mac, dst_ip,
+                   frame, len, UDP_PROTO, ttl);
 }
 
 /* Local Variables: */

@@ -42,14 +42,20 @@ typedef struct dhcp_t {
 #define DHCP_NETMASK 1
 #define DHCP_LEASETIME 51
 #define DHCP_TERMINATE 0xFF
+#define DHCP_CLIENT_ID 61
 
 int send_dhcpreply(raw_iface_t *iface, uint8_t type, uint32_t xid,
 		   macaddr_t src_mac, ipaddr_t src_ip,
 		   macaddr_t dst_mac, ipaddr_t dst_ip,
-		   ipaddr_t gateway, ipaddr_t dns,
+		   ipaddr_t gateway, ipaddr_t dns, ipaddr_t netmask,
 		   macaddr_t chaddr, ipaddr_t ciaddr);
 
+int send_dhcp_discovery(raw_iface_t *iface, macaddr_t src_mac);
+
 int dhcp_parse_request(dhcp_t *dhcp, ipaddr_t *rq_addr);
+int dhcp_parse_dns(dhcp_t *dhcp, ipaddr_t *dns);
+int dhcp_parse_netmask(dhcp_t *dhcp, ipaddr_t *netmask);
 int dhcp_parse_type(dhcp_t *dhcp, uint8_t *type);
+
 
 #endif

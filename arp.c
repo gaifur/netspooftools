@@ -20,9 +20,9 @@
 
 // Used for debugging proposes during development
 void print_bytearray(uint8_t *array, unsigned length,
-										 unsigned base, char separator) {
+                     unsigned base, char separator) {
   unsigned i;
-	
+  
   for(i = 0 ; i < length ; i++) {
     if(i) putchar(separator);
     printf(base == 16 ? "%02X" : "%d", array[i]);
@@ -31,7 +31,7 @@ void print_bytearray(uint8_t *array, unsigned length,
 
 void arp_print(arp_t *arp) {
   uint16_t op;
-	
+  
   switch(op = ntohs(arp->operation)) {
   case ARP_REQUEST:
     printf("ARP Request\n");
@@ -60,7 +60,7 @@ void arp_print(arp_t *arp) {
 
 // Assembles an ARP Request and send it
 int send_arp4_request(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ipaddr,
-											macaddr_t target_macaddr, ipaddr_t target_ip) {
+                      macaddr_t target_macaddr, ipaddr_t target_ip) {
   arp_t arp;
 
   arp.htype = htons(1);
@@ -72,17 +72,17 @@ int send_arp4_request(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ip
   arp.operation = htons(ARP_REQUEST);
 
   memcpy(arp.payload.v4.src_macaddr, src_macaddr, ETH_ALEN);
-  memcpy(arp.payload.v4.src_ipaddr, src_ipaddr, IP_ALEN);
+  arp.payload.v4.src_ipaddr = src_ipaddr;
   
   bzero(arp.payload.v4.dest_macaddr, ETH_ALEN);
-  memcpy(arp.payload.v4.dest_ipaddr, target_ip, IP_ALEN);
+  arp.payload.v4.dest_ipaddr = target_ip;
 
   return send_frame(iface, &arp, sizeof(arp_t), src_macaddr, target_macaddr, ETH_P_ARP);
 }
 
 // Assembles an ARP reply and send it
 int send_arp4_reply(raw_iface_t *iface, macaddr_t src_macaddr, ipaddr_t src_ipaddr,
-		    macaddr_t target_macaddr, ipaddr_t target_ip) {
+                    macaddr_t target_macaddr, ipaddr_t target_ip) {
   arp_t arp;
 
   arp.htype = htons(1);
@@ -111,7 +111,7 @@ static void lookup_timeout() {
 
 // Assembles an arp request and waits for the reply, filling target_mac
 int arp4_lookup(raw_iface_t *iface, ipaddr_t src_ipaddr, macaddr_t src_mac,
-		ipaddr_t target_ipaddr, macaddr_t target_mac) {
+                ipaddr_t target_ipaddr, macaddr_t target_mac) {
   int ret;
   uint8_t buffer[sizeof(macframe_t)+sizeof(arp_t)];
   macframe_t *frame = (macframe_t*)buffer;
@@ -119,7 +119,7 @@ int arp4_lookup(raw_iface_t *iface, ipaddr_t src_ipaddr, macaddr_t src_mac,
 
   // Broadcast an ARP request
   if((ret = send_arp4_request(iface, src_mac, src_ipaddr,
-			      broadcast_macaddr, target_ipaddr)) < 0)
+                              broadcast_macaddr, target_ipaddr)) < 0)
     return ret;
 
   // Wait 3 seconds for a reply

@@ -34,12 +34,12 @@ int open_raw_socket(raw_iface_t *rs, char *ifname, uint16_t ethertype) {
   }
 
   rs->socket_addr.sll_halen = ETH_ALEN;
-	
+  
   /* Gets network interface */
   strncpy(ifr.ifr_name, ifname, IFNAMSIZ-1);
   if(ioctl(rs->fd, SIOCGIFINDEX, &ifr) < 0) {
     perror("ioctl");
-		close(rs->fd);
+    close(rs->fd);
     return -1;
   }
   rs->socket_addr.sll_ifindex = ifr.ifr_ifindex;
@@ -47,7 +47,7 @@ int open_raw_socket(raw_iface_t *rs, char *ifname, uint16_t ethertype) {
   /* Gets interface flags */
   if (ioctl(rs->fd, SIOCGIFFLAGS, &ifr) < 0){
     perror("ioctl");
-		close(rs->fd);
+    close(rs->fd);
     return -1;
   }
 
@@ -55,26 +55,26 @@ int open_raw_socket(raw_iface_t *rs, char *ifname, uint16_t ethertype) {
   ifr.ifr_flags |= IFF_PROMISC;
   if(ioctl(rs->fd, SIOCSIFFLAGS, &ifr) < 0) {
     perror("ioctl");
-		close(rs->fd);
+    close(rs->fd);
     return -1;
   }
 
   /* Gets interface MAC Adress */
   if (ioctl(rs->fd, SIOCGIFHWADDR, &ifr) < 0) {
     perror("SIOCGIFHWADDR");
-		close(rs->fd);
+    close(rs->fd);
     return -1;
   }
 
   memcpy(rs->macaddr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
-	strncpy(rs->ifname, ifname, IFNAMSIZ-1);
+  strncpy(rs->ifname, ifname, IFNAMSIZ-1);
 
   return rs->fd;
 }
 
 // Assembles a MAC frame and sends into the wire
 int send_frame(raw_iface_t *rs, void *payload, size_t length,
-	       macaddr_t source, macaddr_t target, uint16_t ethertype) {
+               macaddr_t source, macaddr_t target, uint16_t ethertype) {
   uint8_t buffer[MAC_MTU];
   int ret;
 
@@ -96,7 +96,7 @@ int send_frame(raw_iface_t *rs, void *payload, size_t length,
 
   // Send package
   if((ret = sendto(rs->fd, buffer, length, 0, (struct sockaddr*) &(rs->socket_addr),
-		   sizeof(struct sockaddr_ll))) < 0)
+                   sizeof(struct sockaddr_ll))) < 0)
     perror("sendto");
 
   return ret;
@@ -105,7 +105,7 @@ int send_frame(raw_iface_t *rs, void *payload, size_t length,
 // Wrapper for recv syscall, so raw_iface_t abstraction is used
 int recv_frame(raw_iface_t *rs, void *buffer, size_t buff_len) {
   int ret;
-	// Receive package
+  // Receive package
   if ((ret = recv(rs->fd, buffer, buff_len, 0)) < 0)
     perror("recv");
 
@@ -115,4 +115,5 @@ int recv_frame(raw_iface_t *rs, void *buffer, size_t buff_len) {
 /* Local Variables: */
 /* mode: c */
 /* tab-width: 2 */
+/* indent-tabs-mode: nil */
 /* End: */
