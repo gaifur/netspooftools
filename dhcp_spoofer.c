@@ -10,6 +10,8 @@
 #include "mac.h"
 #include "udp4.h"
 
+#define TIMEOUT 8192
+
 static volatile unsigned keepRunning = 1;
 
 static void intHandler() {
@@ -44,15 +46,19 @@ int main(int argc, char** argv) {
   if(get_ipv4_addr(&iface, &myIp) < 0)
     return -1;
 
-  if(send_dhcp_discovery(&iface, iface.macaddr) < 0) {
-    fprintf(stderr, "DHCP discovery failed\n");
-    close(fd);
-    return -1;
-  }
-
   signal(SIGINT, intHandler);
 
-  while(keepRunning) {
+  int timeout = 0;
+  while(keepRunning || (timeout < TIMEOUT)) {
+
+    /* every 16 packets retry */
+    if(!(timeout&0xF))
+      if(send_dhcp_discovery(&iface, iface.macaddr) < 0) {
+        fprintf(stderr, "DHCP discovery failed\n");
+        close(fd);
+        return -1;
+      }
+    
     if((len = recv_frame(&iface, buffer, sizeof(buffer))) < 0) {
       close(fd);
       return -1;
@@ -77,9 +83,11 @@ int main(int argc, char** argv) {
         }
       }
     }
+
+    timeout++;
   }
 
-  if(!keepRunning) {
+  if(!keepRunning || timeout >= TIMEOUT) {
     close(fd);
     return 0;
   }
