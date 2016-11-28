@@ -1,6 +1,6 @@
 alert udp any any -> any 68 (				\
-			msg "DHCP Spoofing!!";				\
-			content:"|35 01 05|;rawbytes; \
+			msg: "DHCP Spoofing!!";				\
+			content:"|35 01 05|";rawbytes; \
 			detection_filter:							\
 				track by_dst,								\
 				count 2,										\

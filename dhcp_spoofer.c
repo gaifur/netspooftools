@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
   uint8_t *target_mac;
   macaddr_t dhcp_mac;
   ipaddr_t target_ip, client_ip, dhcp_ip, netmask, dns;
-  struct in_addr myIp;
+  struct in_addr myIp, configured_dns;
 
   macframe_t *frame = (macframe_t*)buffer;
   ipv4_t *ippkg = (ipv4_t*)(frame->payload);
@@ -36,9 +36,15 @@ int main(int argc, char** argv) {
   uint8_t dhcptype;
 
   if (argc < 2) {
-    fprintf(stderr, "Usage: %s <iface>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <iface> [dns]\n", argv[0]);
     return 1;
   }
+
+  if(argc > 2)
+    if(!inet_aton(argv[2], &configured_dns)) {
+      fprintf(stderr, "Invalid ip addr %s\n", argv[2]);
+      return 1;
+    }
 
   if((fd = open_raw_socket(&iface, argv[1], ETH_P_IP)) < 0)
     return -1;
@@ -77,6 +83,7 @@ int main(int argc, char** argv) {
           close(fd);
           return -1;
         } else {
+          dns = argc > 2 ? configured_dns.s_addr : dns;
           dhcp_ip = ippkg->src_ip;
           memcpy(dhcp_mac, frame->src, ETH_ALEN);
           break;
