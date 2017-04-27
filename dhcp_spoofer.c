@@ -77,20 +77,25 @@ int main(int argc, char** argv) {
       if((udppkg->dst_port == htons(68)) &&
          (dhcp_parse_type(dhcpmsg, &dhcptype) >= 0) &&
          (dhcptype == DHCP_OFFER)) {
-        if((dhcp_parse_netmask(dhcpmsg, &netmask) < 0) ||
-           (dhcp_parse_dns(dhcpmsg, &dns) < 0)) {
-          fprintf(stderr, "DHCP scanning failed\n");
-          close(fd);
-          return -1;
-        } else {
-          dns = argc > 2 ? configured_dns.s_addr : dns;
+        if(dhcp_parse_netmask(dhcpmsg, &netmask) >= 0) {
+          if(argc <= 2) {
+            if(dhcp_parse_dns(dhcpmsg, &dns) < 0)
+              goto dhcp_scanning_failed;
+          } else
+            dns = configured_dns.s_addr;
+          
           dhcp_ip = ippkg->src_ip;
           memcpy(dhcp_mac, frame->src, ETH_ALEN);
           break;
+        } else {
+        dhcp_scanning_failed:
+          fprintf(stderr, "DHCP scanning failed\n");
+          close(fd);
+          return -1;
         }
       }
     }
-
+    
     timeout++;
   }
 
